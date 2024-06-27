@@ -112,7 +112,7 @@ static void BlinnPhongModel(GLfloat* pe, GLfloat* ne, GLfloat* out_color) {
     // Ignore the attenuation (p. 20). 
 
     // set view point
-    GLfloat v[3] = { 0.0f - pe[0], 0.0f - pe[1], 10.0f - pe[2]};
+    GLfloat v[3] = { 0.0f - pe[0], 0.0f - pe[1], 10.0f - pe[2] };
     GLfloat v_norm = sqrtf(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
     v[0] = v[0] / v_norm;
     v[1] = v[1] / v_norm;
@@ -150,7 +150,7 @@ static void BlinnPhongModel(GLfloat* pe, GLfloat* ne, GLfloat* out_color) {
         out_color[2] += g_mat_amb[2] * light_amb[2];
 
         // compute and add diffuse
-        GLfloat nl_inner = fmaxf(n[0] * l[0] + n[1] * l[1] + n[2] * l[2], 0.0f);
+        GLfloat nl_inner = fmaxf(n[0] * l[0] + n[1] * l[1] + n[2] * l[2], 0.0f); // dot(n.l)
 
         if (g_gl_diffuse) { // Lambertian diffuse
             out_color[0] += g_mat_diff[0] * light_diff[0] * nl_inner;
@@ -163,6 +163,7 @@ static void BlinnPhongModel(GLfloat* pe, GLfloat* ne, GLfloat* out_color) {
             GLfloat cos_l = nl_inner;
             GLfloat f = 0.5f + 2.0f * rough * powf(cos_d, 2);
             GLfloat mat_diff = (1 + (f - 1) * powf(1 - cos_l, 5)) * (1 + (f - 1) * powf(1 - cos_v, 5));
+            // fd[] is burley's diffuse term
             GLfloat fd[3] = { g_mat_diff[0] * mat_diff, g_mat_diff[1] * mat_diff, g_mat_diff[2] * mat_diff };
             out_color[0] += fd[0] * light_diff[0] * nl_inner;
             out_color[1] += fd[1] * light_diff[1] * nl_inner;
@@ -171,8 +172,9 @@ static void BlinnPhongModel(GLfloat* pe, GLfloat* ne, GLfloat* out_color) {
 
         // compute and add
         if (g_gl_model) { // Phong model
+            // r is reflection vector
             GLfloat r[3] = { 2 * nl_inner * n[0] - l[0], 2 * nl_inner * n[1] - l[1], 2 * nl_inner * n[2] - l[2] };
-            GLfloat vr_inner = fmaxf(r[0] * v[0] + r[1] * v[1] + r[2] * v[2], 0.0f);
+            GLfloat vr_inner = fmaxf(r[0] * v[0] + r[1] * v[1] + r[2] * v[2], 0.0f); // dot(v.r)
 
             out_color[0] += g_mat_spec[0] * light_spec[0] * powf(vr_inner, g_mat_shiny);
             out_color[1] += g_mat_spec[1] * light_spec[1] * powf(vr_inner, g_mat_shiny);
@@ -466,15 +468,15 @@ static void keyboard(unsigned char key, int x, int y) {
 
         break;
 
-    case 'm':
+    case 'm': // switch Phong and Blinn 
         g_gl_model = 1 - g_gl_model;
         break;
 
-    case 'd':
+    case 'd': // switch diffuse terms
         g_gl_diffuse = 1 - g_gl_diffuse;
         break;
 
-    case 'r':
+    case 'r': // change roughness's value
         if (rough < 1.0f) rough += 0.1f;
         break;
 
@@ -483,11 +485,11 @@ static void keyboard(unsigned char key, int x, int y) {
         if (rough < 0.0f) rough = 0.0f;
         break;
 
-    case 'a':
+    case 'a': // add new light
         if (g_num_lights < 10) addLight();
         break;
 
-    case 'A':
+    case 'A': // turn off the light
         if (g_num_lights >= 2) --g_num_lights;
         break;
 
